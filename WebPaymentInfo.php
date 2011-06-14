@@ -25,7 +25,7 @@ class WebPaymentInfo
     * @param string cc country code in 2 symbols.
     * @return array information about the country operators.
     */
-  public static function getCountryInfo($cc = null) {
+  public static function countryInfo($cc = null) {
     if ($cc == null) {
       return $this->countryInfo;
     } else {
@@ -166,8 +166,8 @@ class WebPaymentInfo
     *
     * @return same as getCountryInfo()
     */
-  public function countryInfo() {
-    return self::getCountryInfo($this->getCC2());
+  public function getCountryInfo() {
+    return self::countryInfo($this->getCC2());
   }
 }
 
