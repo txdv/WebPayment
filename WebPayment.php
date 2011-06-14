@@ -289,13 +289,14 @@ abstract class WebPayment
     *
     * @param response The response of the website which to use
     *                 to create the according object.
+    * @param userData array for user data, like password, etc.
     * @return         An instance of the appropriate object.
     *
     */
-  public static function create($response) {
+  public static function create($response, $userData = array()) {
     $response = self::getPrefixed($response);
 
-    $verificationCode = self::checkResponse($response, $user_data);
+    $verificationCode = self::checkResponse($response, $userData);
 
     if ($verificationCode == self::CONFIRM_FAIL) {
       throw new Exception('Verfication failed');
