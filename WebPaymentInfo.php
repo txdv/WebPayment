@@ -7,12 +7,7 @@ class WebPaymentInfo
     */
   const CONSTRUCT_ARG_COUNT = 7;
 
-  /**
-    * Returns some general information about micro payment types according
-    * to all the countries.
-    */
-  public static function getGeneralInfo() {
-  return array(
+  protected $countryInfo = array(
     'DE' => array(
       'operators' => array('D1', 'E-PLUS', 'TALKLINE', 'D2', 'O2', 'DEBITEL', 'MOBILCOM', 'PHONEHOUSE'),
       'tax' => 1900
@@ -22,6 +17,20 @@ class WebPaymentInfo
       'tax' => 2100
     )
   );
+
+  /**
+    * Returns country info for a particular country
+    * or for all countries.
+    *
+    * @param string cc country code in 2 symbols.
+    * @return array information about the country operators.
+    */
+  public static function getCountryInfo($cc = null) {
+    if ($cc == null) {
+      return $this->countryInfo;
+    } else {
+      return $this->countryInfo[$country];
+    }
   }
 
   /**
