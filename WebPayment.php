@@ -292,11 +292,11 @@ abstract class WebPayment
 
     if (MicroWebPayment::equals($response)) {
       // first check registered prefixed microwebpayments
+      $info = WebPaymentInfo::check($response);
       foreach (self::$prefixes as $class) {
-        $info = WebPaymentInfo::check($response);
 
         if (!$info) {
-          throw new Exception('No such payment registered');
+          break;
         }
 
         $key = $info->getKey($response['key']);
