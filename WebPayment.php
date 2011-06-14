@@ -30,6 +30,13 @@ abstract class WebPayment
   const PREFIX = 'wp_';
 
   /**
+    * Response confirmation types.
+    */
+  const CONFIRM_SS2    = 1;
+  const CONFIRM_SS1    = 2;
+  const CONFIRM_FAILED = 3;
+
+  /**
    * If true, check SS2 if false, skip to SS1
    */
   private static $SS2 = true;
@@ -197,7 +204,7 @@ abstract class WebPayment
     *
     * @param array     $response       Response array.
     * @param array     $user_data
-    * @return void
+    * @return int                      Used response type (CONFIRM_SS2, CONFIRM_SS1, CONFIRM_FAIL)
     */
   public static function checkResponse($response, $user_data) {
 
@@ -214,14 +221,14 @@ abstract class WebPayment
       // Verify the data.
       if (self::checkSS2($response)) {
         // Hooray, everything is a
-        return true;
+        return self::CONFIRM_SS2;
       }
     } else if (self::checkSS1($response)) {
       // at least our back up method works!
-      return true;
+      return self::CONFIRM_SS1;
     } else {
       // All attempts to verify the data failed.
-      return false;
+      return self::CONFIRM_FAILED;
     }
   }
 
