@@ -5,7 +5,7 @@ abstract class WebPayment
   /**
     * Prefix for callback data.
     */
-  const Prefix = 'wp_';
+  const PREFIX = 'wp_';
 
   protected static $prefixes = array();
 
@@ -34,7 +34,7 @@ abstract class WebPayment
     * @param prefix the prefix as a string that should be removed
     * @return       an array without the prefixes
     */
-  public static function getPrefixed($data, $prefix = self::Prefix) {
+  public static function getPrefixed($data, $prefix = self::PREFIX) {
 
     if (empty($prefix)) {
       return $data;
