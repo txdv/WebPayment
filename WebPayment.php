@@ -208,7 +208,7 @@ abstract class WebPayment
     *
     * @param array     $response       Response array.
     * @param array     $user_data
-    * @return int                      Used response type (CONFIRM_SS2, CONFIRM_SS1, CONFIRM_FAIL)
+    * @return int                      Used response type (CONFIRM_SS2, CONFIRM_SS1, CONFIRM_FAILED)
     */
   public static function checkResponse($response, $user_data) {
 
@@ -298,7 +298,7 @@ abstract class WebPayment
 
     $verificationCode = self::checkResponse($response, $userData);
 
-    if ($verificationCode == self::CONFIRM_FAIL) {
+    if ($verificationCode == self::CONFIRM_FAILED) {
       throw new Exception('Verfication failed');
     }
 
