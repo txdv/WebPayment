@@ -307,12 +307,12 @@ abstract class WebPayment
 
         // We use this method, which is even documented in the php bug tracker
         if (call_user_func(array($class->getName(), 'checkValidKey'), $key)) {
-            return $class->newInstance($response);
+            return $class->newInstance($response, $info);
         }
       }
 
       // if no found, return the generic one
-      return new MicroWebPayment($response);
+      return new MicroWebPayment($response, $info);
     }
     return null;
   }
@@ -343,9 +343,15 @@ abstract class WebPayment
   public function isTest() {
     return $this->test;
   }
+
+  protected $paymentInfo;
+  public function getPaymentInfo() {
+    return $this->paymentInfo;
+  }
   
-  public function __construct($response) {
+  public function __construct($response, $paymentInfo) {
     $this->test = isset($response['test']);
+    $this->paymentInfo = $paymentInfo;
   }
 }
 
@@ -438,8 +444,8 @@ class MicroWebPayment extends WebPayment
     return $this->key;
   }
 
-  public function __construct($response) {
-    parent::__construct($response);
+  public function __construct($response, $paymentInfo) {
+    parent::__construct($response, $paymentInfo);
     $this->to       = $response['to'];
     $this->from     = $response['from'];
     $this->sms      = $response['sms'];
@@ -496,8 +502,8 @@ abstract class PrefixMicroWebPayment extends MicroWebPayment
     return checkValidKey($this->getSms());
   }
 
-  public function __construct($response) {
-    parent::__construct($response);
+  public function __construct($response, $paymentInfo) {
+    parent::__construct($response, $paymentInfo);
   }
   
   /*
