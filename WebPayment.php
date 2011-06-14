@@ -151,8 +151,12 @@ abstract class WebPayment
     * @return string
     */
   public static function setCertificateFromWeb($web = 'http://downloads.webtopay.com/download/', $cert = 'public.key') {
-    self::setCertificate(self::getUrlContent($web . $cert));
-    return self::getCertificate() != null;
+    try {
+      self::setCertificate(self::getUrlContent($web . $cert));
+      return self::getCertificate() != null;
+    } catch (Exception $e) {
+      return false;
+    }
   }
 
   /**
@@ -211,13 +215,11 @@ abstract class WebPayment
     $orderid  = $response['id'];
     $password = $user_data['sign_password'];
 
-    if (self::useSS2()) {
-      if (!self::validCertificate()) {
-        if (!self::setCertificateFromWeb()) {
-          throw new Exception("Failed to load certificate");
-        }
-      }
-        
+    // Use SS2 if possible
+    // the certificate must be checked, if it is not presented then it has
+    // to be loaded successfuly from the web 
+    if (self::useSS2() && (self::validCertificate() || self::setCertificateFromWeb())) {
+
       // Verify the data.
       if (self::checkSS2($response)) {
         // Hooray, everything is a
