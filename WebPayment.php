@@ -210,10 +210,10 @@ abstract class WebPayment
     * @param array     $user_data
     * @return int                      Used response type (CONFIRM_SS2, CONFIRM_SS1, CONFIRM_FAILED)
     */
-  public static function checkResponse($response, $user_data) {
+  public static function checkResponse($response, $userData) {
 
     $orderid  = $response['id'];
-    $password = $user_data['sign_password'];
+    $password = (isset($userData['sign_password']) ? $user_data['sign_password'] : '');
 
     // Use SS2 if possible
     // the certificate must be checked, if it is not presented then it has
