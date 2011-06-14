@@ -295,8 +295,10 @@ abstract class WebPayment
   public static function create($response) {
     $response = self::getPrefixed($response);
 
-    if (!self::checkResponse($response, array('sign_password' => 'nesamone'))) {
-      throw new Exception('Gaidys');
+    $verificationCode = self::checkResponse($response, $user_data);
+
+    if ($verificationCode == self::CONFIRM_FAIL) {
+      throw new Exception('Verfication failed');
     }
 
     if (MicroWebPayment::equals($response)) {
