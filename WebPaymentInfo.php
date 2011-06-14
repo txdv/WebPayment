@@ -159,6 +159,16 @@ class WebPaymentInfo
     }
     return null;
   }
+  
+  /**
+    * Field to return information about a countrfor this
+    * particular object instance.
+    *
+    * @return same as getCountryInfo()
+    */
+  public function countryInfo() {
+    return self::getCountryInfo($this->getCC2());
+  }
 }
 
 ?>
