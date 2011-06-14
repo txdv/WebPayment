@@ -1,5 +1,7 @@
 <?
 
+require_once('WebPaymentInfo.php');
+
 abstract class WebPayment
 {
   /**
@@ -128,11 +130,11 @@ abstract class WebPayment
   private static $certificate = null;
 
   public static function setCertificate($certificate) {
-    $this->certificate = $certificate;
+    self::$certificate = $certificate;
   }
 
   public static function getCertificate() {
-    return $this->certificate;
+    return self::$certificate;
   }
 
   /**
@@ -162,7 +164,7 @@ abstract class WebPayment
     * @return bool
     */
   public static function validCertificate() {
-    self::getCertificate != null;
+    self::getCertificate() != null;
   }
 
   /**
@@ -180,6 +182,23 @@ abstract class WebPayment
     return $ok === 1;
   }
 
+  /**
+    * Checks and validates response from WebToPay server.
+    *
+    * This function accepts both mikro and makro responses.
+    *
+    * First parameter usualy should by $_GET array.
+    *
+    * Description about response can be found here:
+    * makro: https://www.mokejimai.lt/makro_specifikacija.html
+    * mikro: https://www.mokejimai.lt/mikro_mokejimu_specifikacija_SMS.html
+    *
+    * If response is not correct, WebToPayException will be raised.
+    *
+    * @param array     $response       Response array.
+    * @param array     $user_data
+    * @return void
+    */
   public static function checkResponse($response, $user_data) {
 
     $orderid  = $response['id'];
@@ -187,22 +206,22 @@ abstract class WebPayment
 
     if (self::useSS2()) {
       if (!self::validCertificate()) {
-        self::setCertificateFromWeb();
+        if (!self::setCertificateFromWeb()) {
+          throw new Exception("Failed to load certificate");
+        }
       }
         
-      // If the certificate is still invalid, raise an exception
-      if (!self::validCertificate()) {
-        throw new Exception("Failed to load certificate");
-      }
-
       // Verify the data.
       if (self::checkSS2($response)) {
         // Hooray, everything is a
+        return true;
       }
     } else if (self::checkSS1($response)) {
       // at least our back up method works!
+      return true;
     } else {
       // All attempts to verify the data failed.
+      return false;
     }
   }
 
@@ -267,15 +286,27 @@ abstract class WebPayment
   public static function create($response) {
     $response = self::getPrefixed($response);
 
+    if (!self::checkResponse($response, array('sign_password' => 'nesamone'))) {
+      throw new Exception('Gaidys');
+    }
+
     if (MicroWebPayment::equals($response)) {
       // first check registered prefixed microwebpayments
       foreach (self::$prefixes as $class) {
+        $info = WebPaymentInfo::check($response);
+
+        if (!$info) {
+          throw new Exception('No such payment registered');
+        }
+
+        $key = $info->getKey($response['key']);
+
         // This doesn't work for some reason on abstract methods.
         //$method = $class->getMethod('checkValidKey');
         //if ($method && $method->invoke(null, $response['key'])) {
 
         // We use this method, which is even documented in the php bug tracker
-        if (call_user_func(array($class->getName(), 'checkValidKey'), $response['key'])) {
+        if (call_user_func(array($class->getName(), 'checkValidKey'), $key)) {
             return $class->newInstance($response);
         }
       }
@@ -404,7 +435,7 @@ class MicroWebPayment extends WebPayment
 
   protected $key;
   public function getKey() {
-    return $key;
+    return $this->key;
   }
 
   public function __construct($response) {
@@ -417,7 +448,7 @@ class MicroWebPayment extends WebPayment
     $this->currency = $response['currency'];
     $this->country  = $response['country'];
     $this->id       = $response['id'];
-    $this->_ss1     = $resposne['_ss1'];
+    $this->_ss1     = $response['_ss1'];
     $this->_ss2     = $response['_ss2'];
     $this->key      = $response['key'];
   }
