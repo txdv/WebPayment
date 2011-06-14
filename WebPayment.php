@@ -212,6 +212,12 @@ class MicroWebPayment extends WebPayment
     $this->sms      = $response['sms'];
     $this->operator = $response['operator'];
     $this->amount   = $response['amount'];
+    $this->currency = $response['currency'];
+    $this->country  = $response['country'];
+    $this->id       = $response['id'];
+    $this->_ss1     = $resposne['_ss1'];
+    $this->_ss2     = $response['_ss2'];
+    $this->key      = $response['key'];
   }
 }
 
