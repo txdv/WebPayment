@@ -3,6 +3,11 @@
 class WebPaymentInfo
 {
   /**
+    * The constructor argument count.
+    */
+  const CONSTRUCT_ARG_COUNT = 7;
+
+  /**
     * Returns some general information about micro payment types according
     * to all the countries.
     */
@@ -33,7 +38,7 @@ class WebPaymentInfo
     */
   public static function registerNumber($number) {
     if (gettype($number) != 'object' || get_class($number) != 'WebPaymentInfo') {
-      if (gettype($number) == 'array' && sizeof($number) == 6) {
+      if (gettype($number) == 'array' && sizeof($number) == self::CONSTRUCT_ARG_COUNT) {
         array_push(self::$numbers, new WebPaymentInfo($number));
         return true;
       }
@@ -55,36 +60,40 @@ class WebPaymentInfo
 
   protected $info;
 
-  public function getBaseKey() {
+  public function getPrefix() {
     return $this->info[0];
   }
 
-  public function isBaseKey($key) {
-    return $this->getBaseKey() == $key;
-  }
-
-  public function getNumber() {
+  public function getBaseKey() {
     return $this->info[1];
   }
 
-  public function getCharge() {
+  public function getCC2() {
     return $this->info[2];
   }
 
-  public function getChargeNoTax() {
+  public function getNumber() {
     return $this->info[3];
   }
 
-  public function getCurrency() {
+  public function getCharge() {
     return $this->info[4];
   }
 
-  public function getPrefix() {
+  public function getCurrency() {
     return $this->info[5];
+  }
+
+  public function getChargeNoTax() {
+    return $this->info[6];
   }
 
   public function getArray() {
     return $this->info;
+  }
+
+  public function isBaseKey($key) {
+    return $this->getBaseKey() == $key;
   }
 
   public function __construct() {
@@ -95,8 +104,8 @@ class WebPaymentInfo
       $args = $args[0];
     }
 
-    if (sizeof($args) != 6) {
-      throw new Exception('Array should contain 6 arguments!');
+    if (sizeof($args) != self::CONSTRUCT_ARG_COUNT) {
+      throw new Exception('WebPaymentInfo::__contruct(prefix, baseKey, CC2, number, charge, currency, chargeNoTax) has 7 arguments.');
     }
 
     $this->info = $args;
