@@ -33,40 +33,6 @@ class WebPaymentInfo
     }
   }
 
-  /**
-    * Array of WebPaymentInfo instances.
-    */
-  protected static $numbers = array();
-
-  public static function getInfo() {
-    return self::$numbers;
-  }
-
-  /**
-    * Register a number into the WebPaymentInfo class.
-    */
-  public static function registerNumber($number) {
-    if (gettype($number) != 'object' || get_class($number) != 'WebPaymentInfo') {
-      if (gettype($number) == 'array' && sizeof($number) == self::CONSTRUCT_ARG_COUNT) {
-        array_push(self::$numbers, new WebPaymentInfo($number));
-        return true;
-      }
-      return false;
-    }
-    array_push(self::$numbers, $number);
-    return true;
-  }
-
-  /*
-   * Register an array of numberinfos or array of array containg
-   * the the number information info.
-   */
-  public static function registerNumbers($numbers) {
-    foreach ($numbers as $number) {
-      self::registerNumber($number);
-    }
-  }
-
   protected $info;
 
   public function getPrefix() {
@@ -147,18 +113,6 @@ class WebPaymentInfo
     return $this->isBaseKey($this->getKey($response['key']));
   }
 
-  /**
-    * Go through all registered payment types and
-    * check if one of them fits the response.
-    */
-  public static function check($response) {
-    foreach (self::$numbers as $info) {
-      if ($info->checkResponse($response)) {
-        return $info;
-      }
-    }
-    return null;
-  }
   
   /**
     * Field to return information about a countrfor this

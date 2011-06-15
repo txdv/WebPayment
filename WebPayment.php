@@ -235,25 +235,41 @@ abstract class WebPayment
   }
 
   /**
-    * Array of ReflectionClasses for the PrefixMicroWebPayment
+    * Array of ReflectionClasses for the AbstractMicroWebPayment
     * derived classes.
     */
-  protected static $prefixes = array();
+  protected static $classes = array();
 
   /**
-    * Register a class derived from PrefixMicroWebPayment
+    * Register a class derived from AbstractMicroWebPayment
     * in order to automatically create the appropriate object
-    * with create if the prefix matches.
+    * with create if the appropriate WebPaymentInfo matches
+    * the data.
     *
     * @param className the class name of the class you want to register
     * @return          boolean, true for successful registering, false for non
     */
   public static function register($className) {
-    if (!is_subclass_of($className, 'PrefixMicroWebPayment')) {
+    if (!is_subclass_of($className, 'AbstractMicroWebPayment')) {
       return false;
     }
-    array_push(self::$prefixes, new ReflectionClass($className));
+    array_push(self::$classes, new ReflectionClass($className));
     return true;
+  }
+
+  /**
+    * Returns an instance of the ReflectionClass searching
+    * by class name.
+    *
+    * @return ReflectionClass|null
+    */
+  private static function getRegistered($className) {
+    foreach (self::$classes as $class) {
+      if ($class->getName() == $className) {
+        return $class;
+      }
+    }
+    return null;
   }
 
   /**
@@ -283,7 +299,7 @@ abstract class WebPayment
   /**
     * Factory method for creating the appropriate
     * class objects for different responses.
-    * One can register classes derived from PrefixMicroWebPayment
+    * One can register classes derived from AbstractMicroWebPayment
     * and override the getKey function in order to make this function
     * automatically return the appropriate type.
     *
@@ -303,27 +319,14 @@ abstract class WebPayment
     }
 
     if (MicroWebPayment::equals($response)) {
-      // first check registered prefixed microwebpayments
-      $info = WebPaymentInfo::check($response);
-      foreach (self::$prefixes as $class) {
+      list($className, $info) = AbstractMicroWebPayment::check($response);
 
-        if (!$info) {
-          break;
-        }
+      $class = self::getRegistered($className);
 
-        $key = $info->getKey($response['key']);
-
-        // This doesn't work for some reason on abstract methods.
-        //$method = $class->getMethod('checkValidKey');
-        //if ($method && $method->invoke(null, $response['key'])) {
-
-        // We use this method, which is even documented in the php bug tracker
-        if (call_user_func(array($class->getName(), 'checkValidKey'), $key)) {
-            return $class->newInstance($response, $info);
-        }
+      if ($class) {
+        return $class->newInstance($response, $info);
       }
 
-      // if no found, return the generic one
       return new MicroWebPayment($response, $info);
     }
     return null;
@@ -356,14 +359,8 @@ abstract class WebPayment
     return $this->test;
   }
 
-  protected $paymentInfo;
-  public function getPaymentInfo() {
-    return $this->paymentInfo;
-  }
-  
-  public function __construct($response, $paymentInfo) {
+  public function __construct($response) {
     $this->test = isset($response['test']);
-    $this->paymentInfo = $paymentInfo;
   }
 }
 
@@ -456,8 +453,8 @@ class MicroWebPayment extends WebPayment
     return $this->key;
   }
 
-  public function __construct($response, $paymentInfo) {
-    parent::__construct($response, $paymentInfo);
+  public function __construct($response) {
+    parent::__construct($response);
     $this->to       = $response['to'];
     $this->from     = $response['from'];
     $this->sms      = $response['sms'];
@@ -473,51 +470,75 @@ class MicroWebPayment extends WebPayment
 }
 
 /**
-  * A class which should be used in order to derive templates
-  * for sms commands.
-  *
-  * For example, if you have an sms command which uses the
-  * keyword "code" and then some 4 digit code afterwards,
-  * you would override getPrefix with { return "code"; }
-  * and register the class with WebPayment::register.
-  * It will automatically check if the prefix fits and
-  * return an instance of this class if you call 
-  * WebPayment::create on the response of the service.
+  * Classes derived from this class should symbolize a
+  * MicroWebPayment Transaction. Since you have different
+  * countries from which you can buy the same product,
+  * one just associates this his own derived class
+  * with some WebPaymentInfo's, registers it with
+  * WebPayment and then get's them automatically created
+  * with create.
   */
-abstract class PrefixMicroWebPayment extends MicroWebPayment
+abstract class AbstractMicroWebPayment extends MicroWebPayment
 {
-  /*
-   * The expected key for the MicroWebPayment.
-   * Should be overlooaded and should return
-   * a constant string in capital letters for example:
-   * { return "CODE"; }
-   */
-  abstract static function expectKey();
+  protected static $infolist = array();
 
-  /*
-   * Static me method for checking if the parameter
-   * supplied key is the same.
-   *
-   * @param key the key as a key representation
-   @ @return    bool, true if the key fits, false if not
-   */
-  public static function checkValidKey($key) {
-    return strpos($key, static::expectKey()) === 0;
+  abstract static function who();
+
+  /**
+    * Assosciate some WebPaymentInfo with a class.
+    */
+  public static function registerInfo($number) {
+    if (gettype($number) != 'object' || get_class($number) != 'WebPaymentInfo') {
+      if (gettype($number) == 'array' && sizeof($number) == WebPaymentInfo::CONSTRUCT_ARG_COUNT) {
+        return self::registerInfo(new WebPaymentInfo($number));
+      }
+      return false;
+    }
+
+    $who = static::who();
+
+    if (!isset(self::$infolist[$who])) {
+      self::$infolist[$who] = array();
+    }
+
+    array_push(self::$infolist[$who], $number);
+    return true;
   }
 
   /*
-   * Check if the instance has a valid key.
-   *
-   * @return bool, true if the key fits, false if not
+   * Register an array of WebPaymentInfo or array of array containg
+   * the the information needed for WebPaymentInfo.
    */
-  public function checkKey() {
-    return checkValidKey($this->getSms());
+  public static function registerInfoList($list) {
+    foreach ($list as $info) {
+      self::registerInfo($info);
+    }
   }
 
-  public function __construct($response, $paymentInfo) {
-    parent::__construct($response, $paymentInfo);
+  /**
+    * Go through all registered payment types and
+    * check if one of them fits the response.
+    */
+  public static function check($response) {
+    foreach (self::$infolist as $class => $infolist) {
+      foreach ($infolist as $info) {
+        if ($info->checkResponse($response)) {
+          return array($class, $info);
+        }
+      }
+    }
+    return null;
   }
-  
+
+  protected $paymentInfo;
+  public function getPaymentInfo() {
+    return $this->paymentInfo;
+  }
+
+  public function getPaymentInfoList() {
+    return $infolist[static::who()];
+  }
+
   /*
    * Returns the message without they keywoard in front
    * and trailing/leading spaces.
@@ -526,6 +547,11 @@ abstract class PrefixMicroWebPayment extends MicroWebPayment
    */
   public function getMainMessage() {
     return trim(substr($this->getSms(), strlen($this->getKey())));
+  }
+
+  public function __construct($response, $paymentInfo) {
+    parent::__construct($response);
+    $this->paymentInfo = $paymentInfo;
   }
 }
 
