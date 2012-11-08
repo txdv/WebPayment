@@ -68,12 +68,12 @@ class WebPaymentInfo
   }
 
   public function isBaseKey($key) {
-    return $this->getBaseKey() == $key;
+    return strtolower($this->getBaseKey()) == strtolower($key);
   }
 
   public function __construct() {
     $args = func_get_args();
-    
+
     // if we passed an array of arguments, this will flatten it.
     if (sizeof($args) == 1) {
       $args = $args[0];
@@ -113,7 +113,6 @@ class WebPaymentInfo
     return $this->isBaseKey($this->getKey($response['key']));
   }
 
-  
   /**
     * Field to return information about a countrfor this
     * particular object instance.

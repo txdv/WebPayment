@@ -211,13 +211,12 @@ abstract class WebPayment
     * @return int                      Used response type (CONFIRM_SS2, CONFIRM_SS1, CONFIRM_FAILED)
     */
   public static function checkResponse($response, $userData) {
-
     $orderid  = $response['id'];
-    $password = (isset($userData['sign_password']) ? $user_data['sign_password'] : '');
+    $password = (isset($userData['sign_password']) ? $userData['sign_password'] : '');
 
     // Use SS2 if possible
     // the certificate must be checked, if it is not presented then it has
-    // to be loaded successfuly from the web 
+    // to be loaded successfuly from the web
     if (self::useSS2() && (self::validCertificate() || self::setCertificateFromWeb())) {
 
       // Verify the data.
@@ -225,7 +224,7 @@ abstract class WebPayment
         // Hooray, everything is a
         return self::CONFIRM_SS2;
       }
-    } else if (self::checkSS1($response)) {
+    } else if (self::checkSS1($response, $password, $orderid)) {
       // at least our back up method works!
       return self::CONFIRM_SS1;
     } else {
