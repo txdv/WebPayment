@@ -534,8 +534,8 @@ abstract class AbstractMicroWebPayment extends MicroWebPayment
     return $this->paymentInfo;
   }
 
-  public function getPaymentInfoList() {
-    return $infolist[static::who()];
+  public static function getPaymentInfoList() {
+    return self::$infolist[static::who()];
   }
 
   /*
@@ -551,6 +551,30 @@ abstract class AbstractMicroWebPayment extends MicroWebPayment
   public function __construct($response, $paymentInfo) {
     parent::__construct($response);
     $this->paymentInfo = $paymentInfo;
+  }
+
+  /*
+   * Returns all countrycodes in a single array
+   *
+   * @return array of country codes
+   */
+  public static function getCountryCodes() {
+    $countries = array();
+    $who = static::who();
+    foreach (self::$infolist[$who] as $obj) {
+      array_push($countries, $obj->getCC2());
+    }
+    return $countries;
+  }
+
+  public static function getByCC($cc) {
+    $who = static::who();
+    foreach (self::$infolist[$who] as $obj) {
+      if ($obj->getCC2() == $cc) {
+        return $obj;
+      }
+    }
+    return $obj;
   }
 }
 

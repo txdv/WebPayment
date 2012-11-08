@@ -87,6 +87,15 @@ class WebPaymentInfo
   }
 
   /**
+    * Returns the prefix and the basekey together.
+    *
+    * @return the command to send in an sms.
+    */
+  public function getCommand() {
+    return $this->getPrefix() . $this->getBaseKey();
+  }
+
+  /**
     * Remove the prefix and return the basekey.
     *
     * @return string
