@@ -115,8 +115,11 @@ class WebPaymentInfo
       return false;
     }
 
-    if (strpos($response['key'], $this->getPrefix()) != 0) {
-      return false;
+    // check if prefix is empty
+    if (strlen($this->getPrefix()) > 0) {
+      if (strpos($response['key'], $this->getPrefix()) != 0) {
+        return false;
+      }
     }
 
     return $this->isBaseKey($this->getKey($response['key']));
