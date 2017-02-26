@@ -223,6 +223,8 @@ abstract class WebPayment
       if (self::checkSS2($response)) {
         // Hooray, everything is a
         return self::CONFIRM_SS2;
+      } else {
+        return self::CONFIRM_FAILED;
       }
     } else if (self::checkSS1($response, $password, $orderid)) {
       // at least our back up method works!
